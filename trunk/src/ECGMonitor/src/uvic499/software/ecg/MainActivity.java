@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -20,8 +19,9 @@ public class MainActivity extends Activity {
 	private BluetoothAdapter BT = BluetoothAdapter.getDefaultAdapter();
 	private String deviceName;
 	private String deviceMAC;
-	private BluetoothConnService serviceBT = null;
 	
+	private Intent btServiceIntent;
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -29,8 +29,9 @@ public class MainActivity extends Activity {
 		
         toggleUI(false);
         
-        serviceBT = new BluetoothConnService();
+        btServiceIntent = new Intent(this.getApplicationContext(), BluetoothConnService.class);
         checkBluetooth();
+        startService(btServiceIntent);
         
 	}
 	@Override
@@ -38,6 +39,13 @@ public class MainActivity extends Activity {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.activity_main, menu);
 		return true;
+	}
+	
+	// Stop the Bluetooth service when the app is closed
+	@Override
+	public void onStop() {
+		stopService(btServiceIntent);
+		super.onStop();
 	}
 
 	private void checkBluetooth() {
@@ -119,7 +127,3 @@ public class MainActivity extends Activity {
 	}
 	
 }
-
-
-
-

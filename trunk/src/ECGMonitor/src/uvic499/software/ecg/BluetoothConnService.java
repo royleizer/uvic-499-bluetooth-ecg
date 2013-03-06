@@ -1,7 +1,12 @@
 package uvic499.software.ecg;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ConcurrentModificationException;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -21,14 +26,26 @@ public class BluetoothConnService extends Service {
 	protected static final UUID serverUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FA");
 	private BluetoothSocket serverSocket = null;
 	
-	public void onCreate(Bundle savedInstance) {	
-		
+	// Queue that ECGChartActivity uses to grab Bluetooth data
+	public static LinkedBlockingQueue<Double> bluetoothQueue = new LinkedBlockingQueue<Double>();
+
+	public void onCreate(Bundle savedInstance) {
 	}
 	
 	@Override
 	public IBinder onBind(Intent arg0) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+	    System.out.println("IN BT_CONN_SERVICE's onStartCommand!");
+	    addFileToQueue();
+	    
+	    // We want this service to continue running until it is explicitly
+	    // stopped, so return sticky.
+	    return START_STICKY;
 	}
 	
 	class AcceptThread extends Thread {
@@ -59,6 +76,7 @@ public class BluetoothConnService extends Service {
 	                // Do work to manage the connection (in a separate thread)
 	                // TODO: work the queue here? or in a new thread now?
 	                try {
+	                	// do work to managed connection
 	                	mmServerSocket.close();
 	                	break;
 	                } catch (IOException e) {
@@ -121,5 +139,51 @@ public class BluetoothConnService extends Service {
 	        } catch (IOException e) { }
 	    }
 	}
+	/* Method to add data to the Bluetooth queue - for now, loop through a file because
+	 * we don't have BT connection stuff.
+	 * Read file in new Thread, add doubles to queue.
+	 */
+	private void addFileToQueue() {
+			
+		Thread t = new Thread(new Runnable() {
+			public void run() {
+				// Loop through the test data to get more heartbeats
+				while (true) {
+					if (bluetoothQueue.size() > 2000) {
+						try{
+							Thread.sleep(3000);
+						} catch (InterruptedException e) {
+							continue;
+						}
+					}
+					readFile(R.raw.short_ecg);
+				}
+			}
+		});
+		t.start();
+	}
 	
+	// Helper method for adding hard-coded ecg file data to Bluetooth queue
+	private void readFile(int resourceId) {
+	    // The InputStream opens the resourceId and sends it to the buffer
+	    InputStream is = this.getResources().openRawResource(resourceId);
+	    BufferedReader br = new BufferedReader(new InputStreamReader(is));
+	    String readLine = null;
+
+	    try {
+	        // While the BufferedReader readLine is not null 
+	        while ((readLine = br.readLine()) != null) {
+	        	bluetoothQueue.offer(Double.valueOf(readLine));
+	        }
+
+	    // Close the InputStream and BufferedReader
+	    is.close();
+	    br.close();
+	    
+	    System.out.println("Done reading file!\n");
+	    
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
+	}
 }
