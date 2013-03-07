@@ -35,6 +35,8 @@
             android:value="uvic499.software.ecg.MainActivity" />
       </activity>
        
+    <service android:name=".BluetoothConnService"/>
+    
     </application>
 
 </manifest>
