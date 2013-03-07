@@ -28,6 +28,7 @@ public final class R {
     }
     public static final class raw {
         public static final int ecg2_value=0x7f040000;
+        public static final int short_ecg=0x7f040001;
     }
     public static final class string {
         public static final int Bluetooth_found=0x7f050002;

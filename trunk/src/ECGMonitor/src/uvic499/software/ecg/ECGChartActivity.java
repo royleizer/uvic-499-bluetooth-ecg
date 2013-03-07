@@ -28,12 +28,19 @@ public class ECGChartActivity extends Activity {
 	 private int xScrollAhead = 3;
 	 private double currentX = 0;
 	 private final int chartDelay = 70; //  millisecond delay for count
+	 private Thread chartingThread;
+	 private boolean continueCharting = true;
+	 
 	 public LinkedBlockingQueue<Double> queue = BluetoothConnService.bluetoothQueue;
 	 
 	 @Override
 	 public void onCreate(Bundle savedInstanceState) {
 	     super.onCreate(savedInstanceState);     
 	     setContentView(R.layout.activity_chart);
+	     
+	     if (savedInstanceState != null) {
+	    	 currentX = savedInstanceState.getDouble("currentX");
+	     }
 	     
 	     setChartLook();
 	     dataset = new XYMultipleSeriesDataset();
@@ -57,9 +64,9 @@ public class ECGChartActivity extends Activity {
 	     
 	     setContentView(view);
 	     
-	     new Thread(new Runnable() {
+	     chartingThread = new Thread(new Runnable() {
 	     	 public void run() {
-             	 while(true) {
+             	 while(continueCharting) {
      		         try {
      		        	 Thread.sleep(chartDelay);
      	             } catch (InterruptedException e) {
@@ -78,10 +85,24 @@ public class ECGChartActivity extends Activity {
  	               	 chartDrawCallback.sendMessage(msg);
            	     }
 	         }
-	     }).start();
-	     
+	     });
+	     chartingThread.start();
 	 }
 
+	 @Override
+	 protected void onSaveInstanceState(Bundle b) {
+		super.onSaveInstanceState(b);
+		b.putDouble("currentX", currentX);
+		// now stop the charting thread
+		continueCharting = false;
+		try {
+			chartingThread.join();
+		} catch (InterruptedException e) {
+			// Not sure if this kills thread
+			chartingThread.interrupt();
+		}
+	 }  
+	 
 	 @Override
 	 protected void onStart() {
 	     super.onStart();
@@ -98,20 +119,20 @@ public class ECGChartActivity extends Activity {
 	     renderer = new XYMultipleSeriesRenderer();
 	     
 	     renderer.setApplyBackgroundColor(true);
-	     renderer.setBackgroundColor(Color.TRANSPARENT);//argb(100, 50, 50, 50));
+	     renderer.setBackgroundColor(Color.BLACK);//argb(100, 50, 50, 50));
 	     renderer.setLabelsTextSize(35);
 	     renderer.setLegendTextSize(35);
-	     renderer.setAxesColor(Color.BLUE);
+	     renderer.setAxesColor(Color.GRAY);
 	     renderer.setAxisTitleTextSize(35);
 	     renderer.setChartTitle("ECG Heartbeat");
 	     renderer.setChartTitleTextSize(35);
 	     renderer.setFitLegend(false);
-	     renderer.setGridColor(Color.TRANSPARENT);
+	     renderer.setGridColor(Color.BLACK);
 	     renderer.setPanEnabled(false, false); // TODO
 	     renderer.setPointSize(1);
 	     renderer.setXTitle("Time");
 	     renderer.setYTitle("Num");
-	     renderer.setMargins(new int []{40, 60, 30, 10}); // TODO: i doubled
+	     renderer.setMargins(new int []{5, 50, 50, 5}); // TODO: i doubled
 	     renderer.setZoomButtonsVisible(false);
 	     renderer.setZoomEnabled(false);
 	     renderer.setBarSpacing(10);
