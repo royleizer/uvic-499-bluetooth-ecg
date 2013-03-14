@@ -20,7 +20,8 @@ public class MainActivity extends Activity {
 	private String deviceName;
 	private String deviceMAC;
 	
-	private Intent btServiceIntent;
+	private Intent btConnServiceIntent;
+	private Intent dataSaveServiceIntent;
     
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -29,10 +30,16 @@ public class MainActivity extends Activity {
 		
         toggleUI(false);
         
-        btServiceIntent = new Intent(this.getApplicationContext(), BluetoothConnService.class);
+        btConnServiceIntent = new Intent(this.getApplicationContext(), BluetoothConnService.class);
         checkBluetooth();
-        startService(btServiceIntent);
         
+        dataSaveServiceIntent = new Intent(this.getApplicationContext(), DataSaveService.class);
+        
+        // start services only once Bluetooth is on
+        if (BT.isEnabled()) {
+        	startService(btConnServiceIntent);
+        	startService(dataSaveServiceIntent);
+        }
 	}
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -42,14 +49,17 @@ public class MainActivity extends Activity {
 	}
 	
 	// Stop the Bluetooth service when the app is closed
+	// NOTE: onStop is called when Activity loses focus -
+	// in this case App is still running, so we want service to keep running too
 	@Override
-	public void onStop() {
-		stopService(btServiceIntent);
-		super.onStop();
+	public void onDestroy() {
+		stopService(btConnServiceIntent);
+		stopService(dataSaveServiceIntent);
+		super.onDestroy();
 	}
 
+	// Turns Bluetooth on if it is off.  Starts BT service handler afterwards
 	private void checkBluetooth() {
-		// check if the Bluetooth is going.
 		if (!BT.isEnabled()) {
 			// Bluetooth not enabled: display a message and prompt user to turn it on			
 			Intent enableBT = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -68,6 +78,10 @@ public class MainActivity extends Activity {
 				// turn UI on and show success msg
 				toggleUI(true);
 				Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
+				
+				// Now start Bluetooth service
+				startService(btConnServiceIntent);
+		        
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				System.out.println("RESULT_CANCELLED!!!");
 				toggleUI(false);
@@ -75,9 +89,15 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	
+	// Chart Button onClick
 	public void startChart(View v) {
 		Intent intent = new Intent(this, ECGChartActivity.class);
+		startActivity(intent);
+	}
+	
+	// View Data Button onClick
+	public void viewSavedData(View v) {
+		Intent intent = new Intent(this, ViewSavedDataActivity.class);
 		startActivity(intent);
 	}
 	
@@ -92,15 +112,6 @@ public class MainActivity extends Activity {
 		}
 		
 		BluetoothDevice device = (BluetoothDevice)deviceSet.toArray()[0];
-		/* TODO: Where to read Bluetooth stuff?  Where to put it?
-		Thread t = serviceBT.new ConnectThread(device);
-		t.start();
-		
-		BluetoothSocket btSocket = device.createInsecureRfcommSocketToServiceRecord(BluetoothConnService.serverUUID);
-		btSocket.connect();
-		InputStream input = btSocket.getInputStream();
-		DataInputStream dinput = new DataInputStream(input);
-		*/
 	}
 	
 	private void toggleUI(boolean enabled) {
