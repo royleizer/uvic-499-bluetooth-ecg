@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
-import org.achartengine.model.TimeSeries;
 import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
@@ -42,10 +41,6 @@ public class ECGChartActivity extends Activity {
 	     super.onCreate(savedInstanceState);     
 	     setContentView(R.layout.activity_chart);
 	     
-	     if (savedInstanceState != null) {
-	    	 currentX = savedInstanceState.getDouble("currentX");
-	     }
-	     
 	     setChartLook();
 	     dataset = new XYMultipleSeriesDataset();
 	     xySeries = new XYSeries(renderer.getChartTitle());
@@ -56,9 +51,17 @@ public class ECGChartActivity extends Activity {
 	     
 	     setContentView(view);
 	  
-	     ChartHandler chartUIHandler = new ChartHandler();
-	     chartingThread = new ChartingThread(chartUIHandler);
-	     chartingThread.start();
+	     if (savedInstanceState != null) {
+	    	 currentX = savedInstanceState.getDouble("currentX");
+	     
+	     }
+
+    	 // To deal with onCreate coming from orientation change, only create chartingThread first time
+	     if (chartingThread == null) {
+		     ChartHandler chartUIHandler = new ChartHandler();
+	    	 chartingThread = new ChartingThread(chartUIHandler);
+	    	 chartingThread.start();
+	     }
 	     isActive = true;
 	 }
 
@@ -85,9 +88,14 @@ public class ECGChartActivity extends Activity {
 	 }*/
 	 @Override
 	 protected void onDestroy() {
-		 isActive = false;
-		 chartingThread.cancel();
 		 super.onDestroy();
+		 if (this.isFinishing()) { // real stoppage
+			 isActive = false;
+			 chartingThread.cancel();
+		 } else { // orientation change
+			 // Keep threads alive on orientation change
+		 }
+
 	 }
 	
 	@Override
@@ -114,13 +122,16 @@ public class ECGChartActivity extends Activity {
 	     renderer.setPointSize(1);
 	     renderer.setXTitle("Time");
 	     renderer.setYTitle("Num");
-	     renderer.setMargins(new int []{5, 50, 50, 5}); // TODO: i doubled
+	     renderer.setMargins(new int []{20, 20, 50, 20}); // TODO: i doubled
 	     renderer.setZoomButtonsVisible(false);
 	     renderer.setZoomEnabled(false);
 	     renderer.setBarSpacing(10);
 	     renderer.setShowGrid(false);
 	     renderer.setYAxisMax(2.4);
 	     renderer.setYAxisMin(0.4);
+	     //TODO: Don't show labels or legend
+	     renderer.setShowLabels(false);;
+	     renderer.setShowLegend(false);
 	     
 	     rendererSeries = new XYSeriesRenderer();
 	     rendererSeries.setColor(Color.RED);

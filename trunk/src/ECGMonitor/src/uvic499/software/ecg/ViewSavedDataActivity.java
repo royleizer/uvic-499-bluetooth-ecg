@@ -4,7 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
@@ -29,8 +29,8 @@ public class ViewSavedDataActivity extends Activity {
 	// TODO: The sampling rate here needs to be accurate (it's not now)
 	 private double samplingRate = 0.4;
 	 
-	 
 	private ArrayList<Double> savedData = new ArrayList<Double>();
+	public LinkedBlockingQueue<Double> queue = BluetoothConnService.bluetoothQueueForSaving;
 	
 	/* TODO: encapsulate this cross-app
 	 * Gets the appropriate file to write to.  If multiple users are supported, should have a new file for each
@@ -39,7 +39,7 @@ public class ViewSavedDataActivity extends Activity {
 	 * For now, just use/overwrite the same file each time the service is started.
 	 */
 	String getActiveSavePath() {	
-		Context appContext = getApplicationContext();
+		Context appContext = this.getApplication().getApplicationContext();
 		return appContext.getString(R.string.default_save_file);
 	}
 	
@@ -48,68 +48,68 @@ public class ViewSavedDataActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_chart);
 	    
-		//TODO: Force DataSaveService to finish writing to the file
-		DataSaveService.writeThread.cancel();
+		// TODO: for now, saved data should just fill with in-memory history queue
+		for (Object d : queue.toArray()) {
+			savedData.add((Double)d);
+		}
 		
-		String filepath = getActiveSavePath();
-		readSavedData(filepath);
+		// TODO: want to read from file??
 		
 		displaySavedData();
-		
 	}
 	
 	
-	// Puts all file data into main memory array
+	// Puts all file data into main memory array - TODO: NOT USED
 	public void readSavedData(String filepath) {
-		FileInputStream fin = null;
 		
-		try {
-			fin = openFileInput(filepath);
-		} catch(FileNotFoundException e) {
-			System.out.println("File " + filepath + " does not exist.");
-			return;
-		}
-		char c;
-		char doubleBuilder[] = new char[7];
-		int i = 0;
-		boolean continueReading = true;
-		while (continueReading) {
-			try{
-				if (fin.available() > 0) {
-	    			c = (char)fin.read();
-	    			if (c == '\n' || i > 6) {
-	    				// end of the double, put it in array
-	    				Double d = Double.valueOf(String.copyValueOf(doubleBuilder));
-	    				//System.out.println("--- queueing:" + String.copyValueOf(doubleBuilder));
-	    				savedData.add(d);
-	    				i = 0;
-	    			} else {
-	    				doubleBuilder[i++] = c;
-	    			}
-				} else {
-					// Finished reading file
+				
+			FileInputStream fin = null;
+			try {
+				fin = openFileInput(filepath);
+			} catch(FileNotFoundException e) {
+				System.out.println("File " + filepath + " does not exist.");
+				return;
+			}
+			char c;
+			char doubleBuilder[] = new char[7];
+			int i = 0;
+			boolean continueReading = true;
+			while (continueReading) {
+				try{
+					if (fin.available() > 0) {
+		    			c = (char)fin.read();
+		    			if (c == '\n' || i > 6) {
+		    				// end of the double, put it in array
+		    				Double d = Double.valueOf(String.copyValueOf(doubleBuilder));
+		    				//System.out.println("--- queueing:" + String.copyValueOf(doubleBuilder));
+		    				savedData.add(d);
+		    				i = 0;
+		    			} else {
+		    				doubleBuilder[i++] = c;
+		    			}
+					} else {
+						// Finished reading file
+						continueReading = false;
+					}
+				} catch (IOException e) {
+					System.out.println(e);
 					continueReading = false;
 				}
-			} catch (IOException e) {
-				System.out.println(e);
-				continueReading = false;
+			}
+			
+			try {
+				fin.close();
+			} catch(IOException e) {
 			}
 		}
 		
-		try {
-			fin.close();
-		} catch(IOException e) {
-		}
-		
 		// TODO: File reading done, let's see how much we got
-		System.out.println("---savedData:\n");
+		/*System.out.println("---savedData:\n");
 		for (double d : savedData) {
 			System.out.println("---"+d);
 		}
-		
-	}
+		*/
 
-	
 	public void displaySavedData() {
 		
 		initChartStuff();
