@@ -1,13 +1,12 @@
 package uvic499.software.ecg;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Set;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -19,28 +18,32 @@ public class MainActivity extends Activity {
 	private BluetoothAdapter BT = BluetoothAdapter.getDefaultAdapter();
 	private String deviceName;
 	private String deviceMAC;
+	static String documentSavePath = "";
 	
 	private Intent btConnServiceIntent;
-	private Intent dataSaveServiceIntent;
     
+	private boolean appLoadFinished = false;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+    	toggleUI(false);
 		
-        toggleUI(false);
-        
-        btConnServiceIntent = new Intent(this.getApplicationContext(), BluetoothConnService.class);
-        checkBluetooth();
-        
-        dataSaveServiceIntent = new Intent(this.getApplicationContext(), DataSaveService.class);
-        
-        // start services only once Bluetooth is on
+		btConnServiceIntent = new Intent(MainActivity.this, BluetoothConnService.class);
+		// start services only if Bluetooth is on
         if (BT.isEnabled()) {
         	startService(btConnServiceIntent);
-        	startService(dataSaveServiceIntent);
         }
+        
+        checkBluetooth();
+
+		if (savedInstanceState != null) {
+	    	documentSavePath = savedInstanceState.getString("documentSavePath");
+	    }		
 	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -49,13 +52,27 @@ public class MainActivity extends Activity {
 	}
 	
 	// Stop the Bluetooth service when the app is closed
-	// NOTE: onStop is called when Activity loses focus -
+	// NOTE: do nothing onStop, as it is called when Activity loses focus -
 	// in this case App is still running, so we want service to keep running too
 	@Override
 	public void onDestroy() {
-		stopService(btConnServiceIntent);
-		stopService(dataSaveServiceIntent);
 		super.onDestroy();
+		if (isFinishing()) {
+			// TODO: Would maybe want to save the file now
+			
+			// Definitely want to stop Bluetooth connections
+			stopService(btConnServiceIntent);
+		} else {
+			// just an orientation change - do nothing
+		}
+		//TODO: I blocked this stopService(dataSaveServiceIntent);
+		
+	}
+	
+	@Override
+	protected void onSaveInstanceState(Bundle b) {
+		super.onSaveInstanceState(b);
+		b.putString("documentSavePath", documentSavePath);
 	}
 
 	// Turns Bluetooth on if it is off.  Starts BT service handler afterwards
@@ -66,6 +83,7 @@ public class MainActivity extends Activity {
 			startActivityForResult(enableBT, REQUEST_ENABLE_BLUETOOTH);
 		} else {
 			toggleUI(true);
+			appLoadFinished = true;
 		}
 	}
 	
@@ -79,9 +97,10 @@ public class MainActivity extends Activity {
 				toggleUI(true);
 				Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
 				
-				// Now start Bluetooth service
+
+				// Now start Bluetooth
 				startService(btConnServiceIntent);
-		        
+
 			} else if (resultCode == Activity.RESULT_CANCELED) {
 				System.out.println("RESULT_CANCELLED!!!");
 				toggleUI(false);
@@ -101,27 +120,16 @@ public class MainActivity extends Activity {
 		startActivity(intent);
 	}
 	
-	// TODO: Try to read from a paired device
-	public void readBT(View v) throws IOException {
-		Set<BluetoothDevice> deviceSet = BT.getBondedDevices();
-		
-		if (deviceSet.isEmpty()) {
-			String toastText = "No bluetooth object is paired with this device.  Pair one first.";
-			Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
-			return;
-		}
-		
-		BluetoothDevice device = (BluetoothDevice)deviceSet.toArray()[0];
-	}
-	
 	private void toggleUI(boolean enabled) {
 		System.out.println("Toggling UI to " + enabled);
 		int visibility = enabled ? View.VISIBLE : View.GONE;
 		for (Field f : R.id.class.getFields()) {
 			try {
 				int id = f.getInt(null);
+				
 				// If BT connection msg, do opposite action, and always hide progress bar
 				View v = this.findViewById(id);
+				
 				if (id == R.id.Bluetooth_connection) {
 					v.setEnabled(!enabled);
 					int tempVis = enabled ? View.GONE : View.VISIBLE;

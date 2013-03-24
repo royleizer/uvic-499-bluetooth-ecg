@@ -6,12 +6,9 @@
     <string name="Bluetooth_found">Your Bluetooth is enabled.</string>
     <string name="Bluetooth_notfound">Please enable your Bluetooth to find ECGs</string>
     <string name="button_scan_inactive">Scan for devices</string>
-    <string name="button_scan_active">Scanning...</string>
     
-    <string name="add_values">Add values to the chart</string>    
-	  <string name="x">X</string>    
-	  <string name="y">Y</string>
-	  <string name="add">Add</string>
-	  <string name="new_series">New series</string>
-        
+    <string name="chart_button">Chart demo</string>
+    <string name="history_button">View saved</string>
+    <string name="default_save_file">dummy_file.dat</string>
+               
 </resources>

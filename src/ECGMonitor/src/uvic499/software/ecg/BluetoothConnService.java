@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import uvic499.software.ecg.ECGChartActivity.ChartingThread;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
@@ -16,10 +15,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Bundle;
 import android.os.IBinder;
-
-
 
 public class BluetoothConnService extends Service {
 	
@@ -37,9 +33,6 @@ public class BluetoothConnService extends Service {
 	// Queue that ECGChartActivity uses to grab Bluetooth data; so far this has been fast/efficient enough
 	static LinkedBlockingQueue<Double> bluetoothQueueForSaving = new LinkedBlockingQueue<Double>();
 	static LinkedBlockingQueue<Double> bluetoothQueueForUI = new LinkedBlockingQueue<Double>();
-	
-	public void onCreate(Bundle savedInstance) {
-	}
 	
 	@Override
 	public void onDestroy() {
@@ -292,7 +285,10 @@ public class BluetoothConnService extends Service {
 			continueReading = false;
 		}
 	}
-	/* Method to add data to the Bluetooth queue - for now, loop through a file because
+	/*
+	 * TODO: This method is probably obsolete now
+	 * 
+	 * Method to add data to the Bluetooth queue - for now, loop through a file because
 	 * we don't have BT connection stuff.
 	 * Read file in new Thread, add doubles to queue.
 	 */
