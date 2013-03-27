@@ -24,9 +24,12 @@ public class ECGChartActivity extends Activity {
 	 private XYMultipleSeriesRenderer renderer;
 	 private XYSeriesRenderer rendererSeries;
 	 private GraphicalView view;
-	 private double samplingRate = 0.4;
+	 private double samplingRate = 1;
 	 private int pointsToDisplay = 15;
-	 private int xScrollAhead = 3;
+	 
+	 private int yMax = 1024;
+	 private int yMin = 0;
+	 private int xScrollAhead = 5;
 	 private double currentX = 0;
 	 private final int chartDelay = 70; //  millisecond delay for count
 	 private ChartingThread chartingThread;
@@ -127,8 +130,8 @@ public class ECGChartActivity extends Activity {
 	     renderer.setZoomEnabled(false);
 	     renderer.setBarSpacing(10);
 	     renderer.setShowGrid(false);
-	     renderer.setYAxisMax(2.4);
-	     renderer.setYAxisMin(0.4);
+	     renderer.setYAxisMax(yMax);
+	     renderer.setYAxisMin(yMin);
 	     //TODO: Don't show labels or legend
 	     renderer.setShowLabels(false);;
 	     renderer.setShowLegend(false);
@@ -150,7 +153,6 @@ public class ECGChartActivity extends Activity {
          		}
              	renderer.setXAxisMax(pointsToDisplay + currentX + xScrollAhead);
          		view.repaint();
-         		System.out.println("--time series has items: #"+xySeries.getItemCount());
   	    }
     }
 	

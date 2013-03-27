@@ -1,12 +1,14 @@
 package uvic499.software.ecg;
 
+import java.io.FileOutputStream;
 import java.lang.reflect.Field;
+import java.util.Calendar;
+import java.util.Queue;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -18,11 +20,11 @@ public class MainActivity extends Activity {
 	private BluetoothAdapter BT = BluetoothAdapter.getDefaultAdapter();
 	private String deviceName;
 	private String deviceMAC;
-	static String documentSavePath = "";
+	private String documentSavePath = "";
 	
 	private Intent btConnServiceIntent;
     
-	private boolean appLoadFinished = false;
+	private Queue<Double> queue = BluetoothConnService.bluetoothQueueForSaving;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +61,7 @@ public class MainActivity extends Activity {
 		super.onDestroy();
 		if (isFinishing()) {
 			// TODO: Would maybe want to save the file now
+			saveBluetoothDataToFile();
 			
 			// Definitely want to stop Bluetooth connections
 			stopService(btConnServiceIntent);
@@ -83,7 +86,6 @@ public class MainActivity extends Activity {
 			startActivityForResult(enableBT, REQUEST_ENABLE_BLUETOOTH);
 		} else {
 			toggleUI(true);
-			appLoadFinished = true;
 		}
 	}
 	
@@ -97,7 +99,6 @@ public class MainActivity extends Activity {
 				toggleUI(true);
 				Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
 				
-
 				// Now start Bluetooth
 				startService(btConnServiceIntent);
 
@@ -118,6 +119,33 @@ public class MainActivity extends Activity {
 	public void viewSavedData(View v) {
 		Intent intent = new Intent(this, ViewSavedDataActivity.class);
 		startActivity(intent);
+	}
+	
+	private void saveBluetoothDataToFile() {
+		
+		Calendar calendar = Calendar.getInstance(); 
+		String date = calendar.getTime().toString();
+		
+		System.out.println("----savepath ="+date);
+		FileOutputStream outputStream;
+
+		try {
+		  outputStream = openFileOutput(date, Context.MODE_PRIVATE);
+		  
+		  for (Double d : queue) {
+			  if (d == null) continue;
+			  
+			  for (char c : String.valueOf(d).toCharArray()) {
+				  outputStream.write((int)c);
+			  }
+			  // Print new line after each
+			  outputStream.write('\n');
+			  System.out.println("---wrote double "+d);
+		  }
+		  outputStream.close();
+		} catch (Exception e) {
+		  e.printStackTrace();
+		}
 	}
 	
 	private void toggleUI(boolean enabled) {

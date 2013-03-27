@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -16,6 +18,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
+import android.text.InputFilter.LengthFilter;
 
 public class BluetoothConnService extends Service {
 	
@@ -224,7 +227,7 @@ public class BluetoothConnService extends Service {
 		
 		@Override
 		public void run() {
-			char doubleBuilder[] = new char[7];
+			List<Character> doubleBuilder = new ArrayList<Character>();
 			int i = 0;
 			char c;
 			int waitCount=0;
@@ -237,18 +240,24 @@ public class BluetoothConnService extends Service {
             			c = (char)iStream.read();
             			if (c == '\n') {
             				// end of the double, put it in the queue
-            				Double d = Double.valueOf(String.copyValueOf(doubleBuilder));
-            				System.out.println("--- queueing:" + String.copyValueOf(doubleBuilder));
+            				char charArray[] = new char[doubleBuilder.size()];
+            				for (char b : doubleBuilder) {
+            					charArray[i] = b;
+            					i++;
+            				}
+            				Double d = Double.valueOf(String.copyValueOf(charArray));
+            				System.out.println("--- queueing:" + String.copyValueOf(charArray));
             				bluetoothQueueForSaving.offer(d);
             				if (ECGChartActivity.isActive)
             					bluetoothQueueForUI.offer(d);
             				i = 0;
+            				doubleBuilder.clear();
             			} else {
-            				doubleBuilder[i++] = c;
+            				doubleBuilder.add(c);
             			}
             		} else { 
             			if (waitCount >= 500000) {
-            				// No data ready in 100000 loop cycles, ECG has probably been disconnected. Close self.
+            				// No data ready in 500000 loop cycles, ECG has probably been disconnected. Close self.
             				waitCount = 0;
             				System.out.println("----wait count expired");
             				continueReading = false;

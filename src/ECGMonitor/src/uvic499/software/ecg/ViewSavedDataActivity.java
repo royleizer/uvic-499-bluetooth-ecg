@@ -14,7 +14,6 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -29,8 +28,8 @@ public class ViewSavedDataActivity extends Activity {
 	// TODO: The sampling rate here needs to be accurate (it's not now)
 	 private double samplingRate = 0.4;
 	 
-	private ArrayList<Double> savedData = new ArrayList<Double>();
-	public LinkedBlockingQueue<Double> queue = BluetoothConnService.bluetoothQueueForSaving;
+	 private ArrayList<Double> savedData = new ArrayList<Double>();
+	 public LinkedBlockingQueue<Double> queue = BluetoothConnService.bluetoothQueueForSaving;
 	
 	/* TODO: encapsulate this cross-app
 	 * Gets the appropriate file to write to.  If multiple users are supported, should have a new file for each
@@ -38,11 +37,7 @@ public class ViewSavedDataActivity extends Activity {
 	 * 
 	 * For now, just use/overwrite the same file each time the service is started.
 	 */
-	String getActiveSavePath() {	
-		Context appContext = this.getApplication().getApplicationContext();
-		return appContext.getString(R.string.default_save_file);
-	}
-	
+	 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -52,16 +47,13 @@ public class ViewSavedDataActivity extends Activity {
 		for (Object d : queue.toArray()) {
 			savedData.add((Double)d);
 		}
-		
-		// TODO: want to read from file??
-		
+			
 		displaySavedData();
 	}
 	
 	
 	// Puts all file data into main memory array - TODO: NOT USED
 	public void readSavedData(String filepath) {
-		
 				
 			FileInputStream fin = null;
 			try {
@@ -103,13 +95,6 @@ public class ViewSavedDataActivity extends Activity {
 			}
 		}
 		
-		// TODO: File reading done, let's see how much we got
-		/*System.out.println("---savedData:\n");
-		for (double d : savedData) {
-			System.out.println("---"+d);
-		}
-		*/
-
 	public void displaySavedData() {
 		
 		initChartStuff();
@@ -124,6 +109,13 @@ public class ViewSavedDataActivity extends Activity {
 		}
 
 		dataset.addSeries(xySeries);
+	    
+		// TODO: Setup the X axis max and mins once we have a filled series
+		int xCurr = xySeries.getItemCount();
+		int xLookahead = 100;
+	    int xMin = (xCurr-200 >= 0) ? xCurr-200 : 0;
+	    renderer.setXAxisMax(xCurr+xLookahead);
+	    renderer.setXAxisMin(xMin);
 	    
 		view = ChartFactory.getLineChartView(getApplicationContext(), dataset, renderer);
 	    view.refreshDrawableState();
@@ -153,8 +145,10 @@ public class ViewSavedDataActivity extends Activity {
 	    renderer.setZoomEnabled(true); // TODO: try true
 	    renderer.setBarSpacing(10);
 	    renderer.setShowGrid(false);
-	    renderer.setYAxisMax(2.4);
-	    renderer.setYAxisMin(0.4);
+	    
+	    // TODO: Reset the MAX AND MIN VALUES!!
+	    renderer.setYAxisMax(1024);//2.4);
+	    renderer.setYAxisMin(0);//0.4);
 	    
 	    rendererSeries = new XYSeriesRenderer();
 	    rendererSeries.setColor(Color.BLUE);
