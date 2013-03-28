@@ -9,7 +9,7 @@
     
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="8" />
+        android:targetSdkVersion="14" />
 
     <application
         android:allowBackup="true"
@@ -30,16 +30,16 @@
         
         <activity
         android:name="uvic499.software.ecg.ECGChartActivity"
-        android:label="ECG CHARTER"
+        android:label="@string/activity_chart_label"
         android:parentActivityName="uvic499.software.ecg.MainActivity" >
         <meta-data
             android:name="android.support.PARENT_ACTIVITY"
-            android:value="uvic499.software.ecg.MainActivity" />
+            android:value="uvic499.software.ecg.ECGChartActivity" />
         </activity>
 
         <activity
         android:name="uvic499.software.ecg.ViewSavedDataActivity"
-        android:label="Saved Data Viewer"
+        android:label="@string/activity_viewsaved_label"
         android:parentActivityName="uvic499.software.ecg.MainActivity" >
         <meta-data
             android:name="android.support.PARENT_ACTIVITY"

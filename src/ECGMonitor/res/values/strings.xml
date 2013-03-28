@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">ECGMonitor</string>
-    <string name="menu_settings">Settings?</string>
+    <string name="app_name">ECG Monitor</string>
+    <string name="menu_settings">Settings</string>
+    <string name="activity_chart_label">Real-time data view</string>
+    <string name="activity_viewsaved_label">Saved data view</string>
+    
     <string name="Bluetooth_found">Your Bluetooth is enabled.</string>
     <string name="Bluetooth_notfound">Please enable your Bluetooth to find ECGs</string>
     <string name="button_scan_inactive">Scan for devices</string>

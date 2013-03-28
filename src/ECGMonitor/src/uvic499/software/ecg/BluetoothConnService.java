@@ -18,7 +18,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
-import android.text.InputFilter.LengthFilter;
 
 public class BluetoothConnService extends Service {
 	
@@ -139,7 +138,6 @@ public class BluetoothConnService extends Service {
 		acceptThread.start();
 	}
 	
-	
 	private void setDeviceToDiscoverable() {
 		// Ensure device is discoverable so ECG can see its service.
 		int scan = BT.getScanMode();
@@ -187,16 +185,8 @@ public class BluetoothConnService extends Service {
 	                
 	            	readThread = new BluetoothReadThread();
 	            	readThread.start();
+	            	// Instead of closing socket, try just keeping it alive to accept multiple connections
 	            	
-	            	
-	            	// TODO: Instead of closing socket, try just keeping it alive!
-	            	/*
-                	try {
-						mmServerSocket.close();
-					} catch (IOException e) { }
-                	
-                	break; // Exit the loop - the connection is done
-                	*/
 	            }
 	        }
 	        
@@ -228,7 +218,6 @@ public class BluetoothConnService extends Service {
 		@Override
 		public void run() {
 			List<Character> doubleBuilder = new ArrayList<Character>();
-			int i = 0;
 			char c;
 			int waitCount=0;
         	while (continueReading) {
@@ -241,21 +230,20 @@ public class BluetoothConnService extends Service {
             			if (c == '\n') {
             				// end of the double, put it in the queue
             				char charArray[] = new char[doubleBuilder.size()];
-            				for (char b : doubleBuilder) {
-            					charArray[i] = b;
-            					i++;
+            				for (int j=0; j < charArray.length; j++) {
+            					charArray[j] = doubleBuilder.get(j);
             				}
-            				Double d = Double.valueOf(String.copyValueOf(charArray));
-            				System.out.println("--- queueing:" + String.copyValueOf(charArray));
+            				String stringVal = String.copyValueOf(charArray);
+            				Double d = Double.valueOf(stringVal);
+            				System.out.println("--- queueing:" + stringVal);
             				bluetoothQueueForSaving.offer(d);
             				if (ECGChartActivity.isActive)
             					bluetoothQueueForUI.offer(d);
-            				i = 0;
             				doubleBuilder.clear();
             			} else {
             				doubleBuilder.add(c);
             			}
-            		} else { 
+            		} else { // No input stream available, wait
             			if (waitCount >= 500000) {
             				// No data ready in 500000 loop cycles, ECG has probably been disconnected. Close self.
             				waitCount = 0;
@@ -268,7 +256,7 @@ public class BluetoothConnService extends Service {
             		}
             		
 	        	} catch (IOException e) {
-	        		System.out.println(e+"\nError sending data n shit\n");
+	        		System.out.println(e+"\nError sending data + :"+e);
 	        		// Bluetooth error! Stop reading.
 	        		this.stopAndSendIntent();
 	        	}
@@ -301,7 +289,7 @@ public class BluetoothConnService extends Service {
 	 * we don't have BT connection stuff.
 	 * Read file in new Thread, add doubles to queue.
 	 */
-	private void addFileToQueue() {
+	public void addFileToQueue() {
 			
 		Thread t = new Thread(new Runnable() {
 			public void run() {

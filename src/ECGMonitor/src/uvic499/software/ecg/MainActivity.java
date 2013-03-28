@@ -60,16 +60,12 @@ public class MainActivity extends Activity {
 	public void onDestroy() {
 		super.onDestroy();
 		if (isFinishing()) {
-			// TODO: Would maybe want to save the file now
 			saveBluetoothDataToFile();
-			
 			// Definitely want to stop Bluetooth connections
 			stopService(btConnServiceIntent);
 		} else {
 			// just an orientation change - do nothing
 		}
-		//TODO: I blocked this stopService(dataSaveServiceIntent);
-		
 	}
 	
 	@Override
