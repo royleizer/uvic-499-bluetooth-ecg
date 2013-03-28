@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.Menu;
+import android.view.MenuInflater;
 
 public class ECGChartActivity extends Activity {
 
@@ -24,14 +25,14 @@ public class ECGChartActivity extends Activity {
 	 private XYMultipleSeriesRenderer renderer;
 	 private XYSeriesRenderer rendererSeries;
 	 private GraphicalView view;
-	 private double samplingRate = 1;
-	 private int pointsToDisplay = 15;
+	 private double samplingRate = 0.6;
+	 private int pointsToDisplay = 75;
 	 
-	 private int yMax = 1024;
-	 private int yMin = 0;
-	 private int xScrollAhead = 5;
+	 private int yMax = 600;
+	 private int yMin = 500;
+	 private int xScrollAhead = 35;
 	 private double currentX = 0;
-	 private final int chartDelay = 70; //  millisecond delay for count
+	 private final int chartDelay = 10; //  millisecond delay for count
 	 private ChartingThread chartingThread;
 	 
 	 // TODO: package visibility so that queue service can see when it is ready for data
@@ -67,7 +68,7 @@ public class ECGChartActivity extends Activity {
 	     }
 	     isActive = true;
 	 }
-
+	 
 	 @Override
 	 protected void onSaveInstanceState(Bundle b) {
 		super.onSaveInstanceState(b);
@@ -82,13 +83,6 @@ public class ECGChartActivity extends Activity {
 		}
 	 }  
 	 
-	 /*
-	  * TODO: Maybe don't need this... back button i think destroys
-	 @Override
-	 protected void onPause() {
-		 // TODO: when back button is pressed, DESTROY THAT SHIT
-		 this.onDestroy();
-	 }*/
 	 @Override
 	 protected void onDestroy() {
 		 super.onDestroy();
@@ -100,7 +94,7 @@ public class ECGChartActivity extends Activity {
 		 }
 
 	 }
-	
+	 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -110,7 +104,6 @@ public class ECGChartActivity extends Activity {
 	
 	public void setChartLook() {
 	     renderer = new XYMultipleSeriesRenderer();
-	     
 	     renderer.setApplyBackgroundColor(true);
 	     renderer.setBackgroundColor(Color.BLACK);//argb(100, 50, 50, 50));
 	     renderer.setLabelsTextSize(35);
@@ -123,8 +116,8 @@ public class ECGChartActivity extends Activity {
 	     renderer.setGridColor(Color.BLACK);
 	     renderer.setPanEnabled(false, false); // TODO
 	     renderer.setPointSize(1);
-	     renderer.setXTitle("Time");
-	     renderer.setYTitle("Num");
+	     renderer.setXTitle("X");
+	     renderer.setYTitle("Y");
 	     renderer.setMargins(new int []{20, 20, 50, 20}); // TODO: i doubled
 	     renderer.setZoomButtonsVisible(false);
 	     renderer.setZoomEnabled(false);
@@ -137,8 +130,8 @@ public class ECGChartActivity extends Activity {
 	     renderer.setShowLegend(false);
 	     
 	     rendererSeries = new XYSeriesRenderer();
-	     rendererSeries.setColor(Color.RED);
-	     rendererSeries.setLineWidth(5f);
+	     rendererSeries.setColor(Color.GREEN);
+	     rendererSeries.setLineWidth(10f);
 	     renderer.addSeriesRenderer(rendererSeries);   
 	}
 	
@@ -151,7 +144,7 @@ public class ECGChartActivity extends Activity {
              	if (currentX - pointsToDisplay >= 0 ) {
              		renderer.setXAxisMin(currentX - pointsToDisplay);
          		}
-             	renderer.setXAxisMax(pointsToDisplay + currentX + xScrollAhead);
+             	renderer.setXAxisMax(currentX + xScrollAhead);
          		view.repaint();
   	    }
     }
@@ -179,6 +172,13 @@ public class ECGChartActivity extends Activity {
                		 continue;
                	 }
                	 currentX = currentX+samplingRate;
+            	 if (yVal > yMax) {
+            		 yMax = yVal.intValue();
+            		 renderer.setYAxisMax(yVal);
+            	 } else if (yVal < yMin) {
+            		 yMin = yVal.intValue();
+            		 renderer.setYAxisMin(yVal);
+            	 }
             	 
                	 // send Message to UI handler for charting.
                	 Message msg = Message.obtain();
